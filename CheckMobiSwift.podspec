@@ -10,18 +10,17 @@
 Pod::Spec.new do |s|
   s.name             = "CheckMobiSwift"
   s.version          = "0.1.0"
-  s.summary          = "A short description of CheckMobiSwift."
+  s.summary          = "CheckMobi SDK for swift."
   s.description      = <<-DESC
                        An optional longer description of CheckMobiSwift
 
                        * Markdown format.
                        * Don't worry about the indent, we strip it!
                        DESC
-  s.homepage         = "https://github.com/<GITHUB_USERNAME>/CheckMobiSwift"
-  # s.screenshots     = "www.example.com/screenshots_1", "www.example.com/screenshots_2"
+  s.homepage         = "https://github.com/checkmobi/checkmobi_ios_swift"
   s.author           = { "CheckMobi" => "support@checkmobi.com" }
-  s.source           = { :git => "https://github.com/<GITHUB_USERNAME>/CheckMobiSwift.git", :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
+  s.source           = { :git => "https://github.com/checkmobi/checkmobi_ios_swift.git", :tag => s.version.to_s }
+  s.social_media_url = 'https://twitter.com/checkmobi'
 
   s.platform     = :ios, '8.0'
   s.requires_arc = true
