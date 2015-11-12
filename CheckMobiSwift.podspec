@@ -9,7 +9,7 @@
 
 Pod::Spec.new do |s|
   s.name             = "CheckMobiSwift"
-  s.version          = "0.1.0"
+  s.version          = "0.2.0"
   s.summary          = "CheckMobi SDK for swift."
   s.description      = <<-DESC
                        An optional longer description of CheckMobiSwift

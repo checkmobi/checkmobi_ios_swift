@@ -1,8 +1,8 @@
 import Foundation
 
 public class CMAsyncHTTPConnection: NSObject, NSURLConnectionDataDelegate {
-    typealias OnSuccess = (NSHTTPURLResponse, NSData) -> ()
-    typealias OnFailure = (NSHTTPURLResponse, NSData, NSError) -> ()
+    typealias OnSuccess = (NSHTTPURLResponse?, NSData) -> ()
+    typealias OnFailure = (NSHTTPURLResponse?, NSData?, NSError) -> ()
     
     var request: NSURLRequest
     var response: NSHTTPURLResponse?
@@ -17,11 +17,11 @@ public class CMAsyncHTTPConnection: NSObject, NSURLConnectionDataDelegate {
         self.request = request
     }
     
-    func executeRequest(#success: OnSuccess?, failure: OnFailure?) -> Bool {
+    func executeRequest(success success: OnSuccess?, failure: OnFailure?) -> Bool {
         onSuccess = success
         onFailure = failure
         
-        var connection = NSURLConnection(request: self.request, delegate: self)
+        let connection = NSURLConnection(request: self.request, delegate: self)
         
         return connection != nil
     }
@@ -38,13 +38,13 @@ public class CMAsyncHTTPConnection: NSObject, NSURLConnectionDataDelegate {
     
     public func connection(connection: NSURLConnection, didFailWithError error: NSError) {
         if let onFailure = onFailure {
-            onFailure(response!, data!, error)
+            onFailure(response, data, error)
         }
     }
     
     public func connectionDidFinishLoading(connection: NSURLConnection) {
         if let onSuccess = onSuccess {
-            onSuccess(response!, data!)
+            onSuccess(response, data!)
         }
     }
     
@@ -57,18 +57,18 @@ public class CMAsyncHTTPConnection: NSObject, NSURLConnectionDataDelegate {
             if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
                 let trust = challenge.protectionSpace.serverTrust
                 var trustResult: SecTrustResultType = 0
-                SecTrustEvaluate(trust, &trustResult)
+                SecTrustEvaluate(trust!, &trustResult)
                 if (Int(trustResult) == kSecTrustResultUnspecified ||
                     Int(trustResult) == kSecTrustResultProceed ||
                     !ignoreInvalidCertificates) {
                         // Trust certificate.
-                        let credential = NSURLCredential(forTrust: challenge.protectionSpace.serverTrust)
-                        challenge.sender.useCredential(credential, forAuthenticationChallenge: challenge)
+                        let credential = NSURLCredential(forTrust: challenge.protectionSpace.serverTrust!)
+                        challenge.sender!.useCredential(credential, forAuthenticationChallenge: challenge)
                 } else {
-                    challenge.sender.cancelAuthenticationChallenge(challenge)
+                    challenge.sender!.cancelAuthenticationChallenge(challenge)
                 }
             } else {
-                challenge.sender.cancelAuthenticationChallenge(challenge)
+                challenge.sender!.cancelAuthenticationChallenge(challenge)
             }
     }
     
