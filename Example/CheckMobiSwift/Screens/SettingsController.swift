@@ -27,10 +27,10 @@ class SettingsController: UIViewController {
             return
         }
         
-        CheckMobiService.sharedInstance.baseUrl = baseUrlField.text
-        CheckMobiService.sharedInstance.secretKey = secretKeyField.text
-        CheckMobiService.sharedInstance.smsLanguage = smsLanguageField.text
-        CheckMobiService.sharedInstance.ivrLanguage = ivrLanguageField.text
+        CheckMobiService.sharedInstance.baseUrl = baseUrlField.text!
+        CheckMobiService.sharedInstance.secretKey = secretKeyField.text!
+        CheckMobiService.sharedInstance.smsLanguage = smsLanguageField.text!
+        CheckMobiService.sharedInstance.ivrLanguage = ivrLanguageField.text!
         
         let defaults = NSUserDefaults.standardUserDefaults()
         defaults.setObject(baseUrlField.text, forKey: "base_url")

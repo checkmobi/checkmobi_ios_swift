@@ -42,12 +42,7 @@ public enum CMErrorCode: Int {
 }
 
 public class CheckMobiService {
-    public class var sharedInstance: CheckMobiService {
-        struct Singleton {
-            static let instance = CheckMobiService()
-        }
-        return Singleton.instance
-    }
+    public static let sharedInstance = CheckMobiService()
     
     struct Constants {
         static let defaultBaseUrl = "https://api.checkmobi.com/v1/"
@@ -102,17 +97,22 @@ public class CheckMobiService {
     }
     
     private func parseResponseBody(data: NSData?) -> AnyObject? {
-        if let data = data {
-            var error:NSError? = nil
-            return NSJSONSerialization.JSONObjectWithData(data, options: nil, error: &error)
+        guard let data = data else { return nil }
+        do {
+            return try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments)
+        } catch _ {
+            return nil
         }
-        return nil
     }
     
     private func performRequest(url: String, method: HTTPMethod, params: [String:AnyObject]?, callback: ((AnyObject?, NSError?) -> ())?) {
         let jsonData: NSData?
         if let params = params {
-            jsonData = NSJSONSerialization.dataWithJSONObject(params, options: nil, error: nil)
+            do {
+                jsonData = try NSJSONSerialization.dataWithJSONObject(params, options: NSJSONWritingOptions.init(rawValue: 0))
+            } catch _ {
+                jsonData = nil
+            }
         } else {
             jsonData = nil
         }
@@ -125,43 +125,59 @@ public class CheckMobiService {
             urlRequest.HTTPBody = jsonData
         }
         let connection = CMAsyncHTTPConnection(urlRequest)
-        connection.executeRequest(success: { (httpResponse: NSHTTPURLResponse, body: NSData) -> () in
+        connection.executeRequest(success: { (httpResponse: NSHTTPURLResponse?, body: NSData?) -> () in
                 let bodyDict: AnyObject? = self.parseResponseBody(body)
                 if let callback = callback {
                     var error: NSError?
-                    if httpResponse.statusCode >= 400 {
+                    if httpResponse?.statusCode >= 400 {
                         if let bodyDict = bodyDict as? [String:AnyObject] {
                             if let errorCode = bodyDict["code"] as? Int {
                                 error = NSError(domain: "com.checkmobi", code: errorCode, userInfo: [NSLocalizedDescriptionKey: bodyDict["error"] ?? ""])
                             } else {
-                                error = NSError(domain: "com.checkmobi", code: httpResponse.statusCode, userInfo: bodyDict)
+                                if let httpResponse = httpResponse {
+                                    error = NSError(domain: "com.checkmobi", code: httpResponse.statusCode, userInfo: bodyDict)
+                                } else {
+                                    error = NSError(domain: "com.checkmobi", code: 0, userInfo: bodyDict)
+                                }
                             }
                         }
                         if error == nil {
-                            error = NSError(domain: "com.checkmobi", code: httpResponse.statusCode, userInfo: nil)
+                            if let httpResponse = httpResponse {
+                                error = NSError(domain: "com.checkmobi", code: httpResponse.statusCode, userInfo: nil)
+                            } else {
+                                error = NSError(domain: "com.checkmobi", code: 0, userInfo: nil)
+                            }
                         }
                     }
                     callback(bodyDict, error)
                 }
             },
-            failure: { (httpResponse: NSHTTPURLResponse, body: NSData, error: NSError?) -> () in
+            failure: { (httpResponse: NSHTTPURLResponse?, body: NSData?, error: NSError?) -> () in
                 
                 let bodyDict: AnyObject? = self.parseResponseBody(body)
                 
-                NSLog("Failed Response: \(httpResponse.statusCode) body: \(bodyDict) error: \(error?.description)")
+                NSLog("Failed Response: \(httpResponse?.statusCode) body: \(bodyDict) error: \(error?.description)")
                 
                 if let callback = callback {
                     var error: NSError?
-                    if httpResponse.statusCode >= 400 {
+                    if httpResponse?.statusCode >= 400 {
                         if let bodyDict = bodyDict as? [String:AnyObject] {
                             if let errorCode = bodyDict["code"] as? Int {
                                 error = NSError(domain: "com.checkmobi", code: errorCode, userInfo: [NSLocalizedDescriptionKey: bodyDict["error"] ?? ""])
                             } else {
-                                error = NSError(domain: "com.checkmobi", code: httpResponse.statusCode, userInfo: bodyDict)
+                                if let httpResponse = httpResponse {
+                                    error = NSError(domain: "com.checkmobi", code: httpResponse.statusCode, userInfo: bodyDict)
+                                } else {
+                                    error = NSError(domain: "com.checkmobi", code: 0, userInfo: bodyDict)
+                                }
                             }
                         }
                         if error == nil {
-                            error = NSError(domain: "com.checkmobi", code: httpResponse.statusCode, userInfo: nil)
+                            if let httpResponse = httpResponse {
+                                error = NSError(domain: "com.checkmobi", code: httpResponse.statusCode, userInfo: nil)
+                            } else {
+                                error = NSError(domain: "com.checkmobi", code: 0, userInfo: nil)
+                            }
                         }
                     }
                     callback(bodyDict, error)
@@ -169,7 +185,7 @@ public class CheckMobiService {
         })
     }
     
-    public func requestValidation(#type: CMValidationType, number e164_number: String, callback: (CMValidationResponse?, NSError?) -> ()) {
+    public func requestValidation(type type: CMValidationType, number e164_number: String, callback: (CMValidationResponse?, NSError?) -> ()) {
         var params = [String:String]()
         params["type"] = type.rawValue
         params["number"] = e164_number
@@ -195,11 +211,11 @@ public class CheckMobiService {
                 callback(result, nil)
                 return
             }
-            callback(nil, NSError())
+            callback(nil, NSError(domain: "com.checkmobi", code: 0, userInfo: nil))
         }
     }
     
-    public func checkValidationStatus(#requestId: String, callback: (CMVerificationStatus?, NSError?) -> ()) {
+    public func checkValidationStatus(requestId requestId: String, callback: (CMVerificationStatus?, NSError?) -> ()) {
         let url = "\(Constants.validationStatusUrl)/\(requestId)"
         performRequest(url, method: .GET, params: nil) { (response: AnyObject?, error: NSError?) -> () in
             if error !== nil {
@@ -210,10 +226,11 @@ public class CheckMobiService {
                 callback(result, nil)
                 return
             }
-            callback(nil, NSError())        }
+            callback(nil, NSError(domain: "com.checkmobi", code: 0, userInfo: nil))
+        }
     }
     
-    public func verifyPin(#requestId: String, pin: String, callback: (CMVerificationStatus?, NSError?) -> ()) {
+    public func verifyPin(requestId requestId: String, pin: String, callback: (CMVerificationStatus?, NSError?) -> ()) {
         let params = ["id": requestId, "pin": pin]
         performRequest(Constants.validationPinVerifyUrl, method: .POST, params: params){ (response: AnyObject?, error: NSError?) -> () in
             if error !== nil {
@@ -224,7 +241,7 @@ public class CheckMobiService {
                 callback(result, nil)
                 return
             }
-            callback(nil, NSError())
+            callback(nil, NSError(domain: "com.checkmobi", code: 0, userInfo: nil))
         }
     }
     
@@ -239,7 +256,7 @@ public class CheckMobiService {
                 callback(result, nil)
                 return
             }
-            callback(nil, NSError())
+            callback(nil, NSError(domain: "com.checkmobi", code: 0, userInfo: nil))
         }
     }
     
@@ -254,7 +271,7 @@ public class CheckMobiService {
                 callback(countries, nil)
                 return
             }
-            callback(nil, NSError())
+            callback(nil, NSError(domain: "com.checkmobi", code: 0, userInfo: nil))
         }
     }
 }

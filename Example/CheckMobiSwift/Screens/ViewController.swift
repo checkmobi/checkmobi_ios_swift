@@ -44,11 +44,9 @@ class ViewController: UIViewController {
         let center = CTCallCenter()
         if center.currentCalls != nil {
             for call in center.currentCalls! {
-                if let call = call as? CTCall {
-                    if call.callID == callId {
-                        found = true
-                        break
-                    }
+                if call.callID == callId {
+                    found = true
+                    break
                 }
             }
         }
@@ -81,10 +79,10 @@ class ViewController: UIViewController {
             
             if let status = status {
                 if !status.validated {
-                    showMessageBox("Error", "Number not validated ! Check your phone number!", 0, nil)
+                    showMessageBox("Error", message: "Number not validated ! Check your phone number!", tag: 0, delegate: nil)
                     return
                 }
-                showMessageBox("Validation completed", "Validation completed for: \(status.number)", 0, nil)
+                showMessageBox("Validation completed", message: "Validation completed for: \(status.number)", tag: 0, delegate: nil)
                 self.OnReset(nil)
             } else {
                 self.handleValidationServiceError(error)
@@ -122,19 +120,19 @@ class ViewController: UIViewController {
     
     @IBAction func OnValidate(sender: AnyObject?)  {
         if CheckMobiService.sharedInstance.secretKey == "" {
-            showMessageBox("Error", "API secret key is not specified", 0, nil)
+            showMessageBox("Error", message: "API secret key is not specified", tag: 0, delegate: nil)
             return
         }
         
         if !pinStep {
             if validationNumber.text == "" {
-                showMessageBox("Invalid number", "Please provide a valid number", 0, nil)
+                showMessageBox("Invalid number", message: "Please provide a valid number", tag: 0, delegate: nil)
                 return
             }
             
             validationNumber.resignFirstResponder()
             
-            CheckMobiService.sharedInstance.requestValidation(type: getCurrentValidationType(), number: validationNumber.text, callback: { (response: CMValidationResponse?, error: NSError?) -> () in
+            CheckMobiService.sharedInstance.requestValidation(type: getCurrentValidationType(), number: validationNumber.text!, callback: { (response: CMValidationResponse?, error: NSError?) -> () in
                 
                 if error == nil && response != nil {
                     let key = response!.id
@@ -153,21 +151,21 @@ class ViewController: UIViewController {
             })
         } else {
             if self.validationPin.text == "" {
-                showMessageBox("Invalid pin", "Please provide a valid pin number", 0, nil)
+                showMessageBox("Invalid pin", message: "Please provide a valid pin number", tag: 0, delegate: nil)
                 return
             }
             
             self.validationPin.resignFirstResponder()
             
-            CheckMobiService.sharedInstance.verifyPin(requestId: validationKey!, pin: validationPin.text, callback: { (verificationStatus: CMVerificationStatus?, error: NSError?) -> () in
+            CheckMobiService.sharedInstance.verifyPin(requestId: validationKey!, pin: validationPin.text!, callback: { (verificationStatus: CMVerificationStatus?, error: NSError?) -> () in
                     
                     if error == nil && verificationStatus != nil {
                         if !verificationStatus!.validated {
-                            showMessageBox("Error", "Invalid PIN!", 0, nil)
+                            showMessageBox("Error", message: "Invalid PIN!", tag: 0, delegate: nil)
                             return
                         }
                         
-                        showMessageBox("Validation completed", "Validation completed for:\(self.validationNumber.text)", 0, nil)
+                        showMessageBox("Validation completed", message: "Validation completed for:\(self.validationNumber.text!)", tag: 0, delegate: nil)
                         self.OnReset(nil)
                     } else {
                         self.handleValidationServiceError(error)
@@ -216,9 +214,9 @@ class ViewController: UIViewController {
                 default:
                     errorMessage = "Service unavailable. Please try later."
             }
-            showMessageBox("Error", errorMessage, 0, nil)
+            showMessageBox("Error", message: errorMessage, tag: 0, delegate: nil)
         } else {
-            showMessageBox("Error", "Service unavailable. Please try later.", 0, nil)
+            showMessageBox("Error", message: "Service unavailable. Please try later.", tag: 0, delegate: nil)
         }
     }
     
